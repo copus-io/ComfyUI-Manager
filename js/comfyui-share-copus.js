@@ -4,7 +4,6 @@ import { $el, ComfyDialog } from "../../scripts/ui.js";
 
 const DEFAULT_HOMEPAGE_URL = "https://copus.io";
 
-
 const API_ENDPOINT = "https://test.copus.io/copus-client";
 
 const style = `
