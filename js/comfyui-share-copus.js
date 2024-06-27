@@ -99,6 +99,21 @@ export class CopusShareDialog extends ComfyDialog {
       boxSizing: "border-box",
     };
 
+    const textAreaStyle = {
+      display: "block",
+      minWidth: "500px",
+      width: "100%",
+      padding: "10px",
+      margin: "10px 0",
+      borderRadius: "4px",
+      border: "1px solid #ddd",
+      boxSizing: "border-box",
+      minHeight: "100px",
+      background:'#222',
+      resize: "vertical",
+      color: "#f2f2f2",
+    };
+
     const hyperLinkStyle = {
       display: "block",
       marginBottom: "15px",
@@ -178,13 +193,18 @@ export class CopusShareDialog extends ComfyDialog {
     });
     this.NameInput = $el("input", {
       type: "text",
-      placeholder: "Title (required)",
+      placeholder: "Title (Required)",
+      style: inputStyle,
+    });
+    this.SubTitleInput = $el("input", {
+      type: "text",
+      placeholder: "Subtitle (Optional)",
       style: inputStyle,
     });
     this.descriptionInput = $el("textarea", {
-      placeholder: "Description (optional)",
+      placeholder: "Subtitle (Optional)",
       style: {
-        ...inputStyle,
+        ...textAreaStyle,
         minHeight: "100px",
       },
     });
@@ -202,11 +222,11 @@ export class CopusShareDialog extends ComfyDialog {
     });
 
     // LinkSection
-    this.communityLink = $el("a", {
-      style: hyperLinkStyle,
-      href: DEFAULT_HOMEPAGE_URL,
-      target: "_blank"
-    }, ["👉 Check out thousands of workflows shared from the community"])
+    // this.communityLink = $el("a", {
+    //   style: hyperLinkStyle,
+    //   href: DEFAULT_HOMEPAGE_URL,
+    //   target: "_blank"
+    // }, ["👉 Check out thousands of workflows shared from the community"])
     this.getAPIKeyLink = $el("a", {
       style: {
         ...hyperLinkStyle,
@@ -225,7 +245,7 @@ export class CopusShareDialog extends ComfyDialog {
         },
       },
       [
-        this.communityLink,
+        // this.communityLink,
         this.getAPIKeyLink,
       ]
     );
@@ -254,12 +274,66 @@ export class CopusShareDialog extends ComfyDialog {
     }, []);
 
     // Additional Inputs Section
-    const additionalInputsSection = $el("div", {style: sectionStyle}, [
-      $el("label", {style: labelStyle}, ["3️⃣ Workflow Information"]),
+    const additionalInputsSection = $el("div", { style: sectionStyle }, [
+      $el("label", { style: labelStyle }, ["3️⃣ Title "]),
       this.NameInput,
+      
+    ]);
+    const SubtitleSection = $el("div", { style: sectionStyle }, [
+      $el("label", { style: labelStyle }, ["4️⃣ Subtitle "]),
+      this.SubTitleInput,
+    ]);
+    const DescriptionSection = $el("div", { style: sectionStyle }, [
+      $el("label", { style: labelStyle }, ["5️⃣ Description "]),
       this.descriptionInput,
     ]);
+    // switch  between outputs section and additional inputs section
+    this.radioButtons = [];
+    const blockChainSection = $el("div", { style: sectionStyle }, [
+      $el("label", { style: labelStyle }, ["6️⃣ Store on blockchain "]),
+      // swicth 开关
+      $el(
+        "label",
+        {
+          style: {
+            marginTop: "10px",
+            display: "flex",
+            alignItems: "center",
+            cursor: "pointer",
+          },
+        },
+        [
+          $el("input", {
+            type: "radio",
+            name: "output_type",
+            value: "0",
+            id: "blockchain1",
+            checked: true,
+          }),
+          $el("span", { style: { marginLeft: "5px" } }, ["ON"]),
+        ]
+      ),
+      $el(
+        "label",
+        { style: { display: "flex", alignItems: "center", cursor: "pointer" } },
+        [
+          $el("input", {
+            type: "radio",
+            name: "output_type",
+            value: "1",
+            id: "blockchain",
+          }),
+          $el("span", { style: { marginLeft: "5px" } }, ["OFF"]),
+        ]
+      ),
+      // 描述
 
+      $el(
+        "p",
+        { style: { fontSize: "16px", color: "#fff", margin: "10px 0 0 0" } },
+        ["Secure your ownership with a permanent & decentralized storage"]
+      ),
+    ]);
     // OpenArt Contest Section
     /*
     this.joinContestCheckbox = $el("input", {
@@ -348,7 +422,10 @@ export class CopusShareDialog extends ComfyDialog {
       outputUploadSection,
       this.outputsSection,
       additionalInputsSection,
+      SubtitleSection,
+      DescriptionSection,
       // contestSection,
+      blockChainSection,
       this.message,
       buttonsSection,
     ];
@@ -441,6 +518,7 @@ export class CopusShareDialog extends ComfyDialog {
     const form_values = {
       name: this.NameInput.value,
       description: this.descriptionInput.value,
+      blockchain: this.blockchain.checked ? 1 : 0,
     };
 
     if (!this.keyInput.value) {
