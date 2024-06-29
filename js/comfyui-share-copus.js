@@ -553,6 +553,8 @@ export class CopusShareDialog extends ComfyDialog {
           this.previewImage.src = "";
           this.previewImage.style.display = "none";
           this.uploadedImages = [];
+          this.allFilesImages = [];
+          this.allFiles = [];
           this.TitleInput.value = "";
           this.SubTitleInput.value = "";
           this.descriptionInput.value = "";
