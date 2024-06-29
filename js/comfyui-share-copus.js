@@ -63,7 +63,9 @@ export class CopusShareDialog extends ComfyDialog {
     this.selectedOutputIndex = 0;
     this.selectedNodeId = null;
     this.uploadedImages = [];
+    this.allFilesImages = [];
     this.selectedFile = null;
+    this.allFiles = [];
   }
   // 生成 html 元素
   createButtons() {
@@ -228,7 +230,7 @@ export class CopusShareDialog extends ComfyDialog {
 
     // Account Section
     const accountSection = $el("div", { style: sectionStyle }, [
-      $el("label", { style: labelStyle }, ["1️⃣ OpenArt API Key"]),
+      $el("label", { style: labelStyle }, ["1️⃣ Copus API Key"]),
       this.keyInput,
     ]);
 
@@ -420,7 +422,7 @@ export class CopusShareDialog extends ComfyDialog {
    * 文件上传
    * @param {file} uploadFile
    */
-  async uploadThumbnail(uploadFile) {
+  async uploadThumbnail(uploadFile, type) {
     const form = new FormData();
     form.append("file", uploadFile);
     form.append("apiToken", this.keyInput.value);
@@ -436,6 +438,11 @@ export class CopusShareDialog extends ComfyDialog {
 
       if (res.status && res.data) {
         const { data } = res.data;
+        if (type) {
+          this.allFilesImages.push({
+            url: data,
+          });
+        }
         this.uploadedImages.push({
           url: data,
         });
@@ -511,6 +518,16 @@ export class CopusShareDialog extends ComfyDialog {
         }
       }
     }
+    if (this.allFiles.length > 0) {
+      for (const file of this.allFiles) {
+        try {
+          await this.uploadThumbnail(file, true);
+        } catch (e) {
+          this.allFilesImages = [];
+          throw new Error(e.message);
+        }
+      }
+    }
     try {
       const res = await this.fetchApi(
         "/client/common/opus/shareFromComfyUI",
@@ -521,7 +538,7 @@ export class CopusShareDialog extends ComfyDialog {
             workflowJson: workflowJSON,
             apiToken: this.keyInput.value,
             coverUrl: this.uploadedImages[0].url,
-            imageUrls: this.uploadedImages.map((image) => image.url),
+            imageUrls: this.allFilesImages.map((image) => image.url),
             ...form_values,
           }),
         },
@@ -587,9 +604,10 @@ export class CopusShareDialog extends ComfyDialog {
     this.element.style.display = "block";
     this.previewImage.src = "";
     this.previewImage.style.display = "none";
-    this.keyInput.value = '';
+    this.keyInput.value = "";
     this.uploadedImages = [];
-
+    this.allFilesImages = [];
+    this.allFiles = [];
     // If `selectedNodeId` is provided, we will select the corresponding radio
     // button for the node. In addition, we move the selected radio button to
     // the top of the list.
@@ -610,14 +628,13 @@ export class CopusShareDialog extends ComfyDialog {
         style: {
           "overflow-y": "scroll",
           "max-height": "200px",
-
-          display: "grid",
+          'display': "grid",
           "grid-template-columns": "repeat(auto-fit, minmax(100px, 1fr))",
           "grid-template-rows": "auto",
           "grid-column-gap": "10px",
           "grid-row-gap": "10px",
           "margin-bottom": "10px",
-          padding: "10px",
+          'padding': "10px",
           "border-radius": "8px",
           "box-shadow": "0 2px 4px rgba(0, 0, 0, 0.05)",
           "background-color": "var(--bg-color)",
@@ -757,9 +774,25 @@ export class CopusShareDialog extends ComfyDialog {
           this.outputsSection.style.opacity = 1;
           this.uploadImagesInput.style.opacity = 0.35;
         }
-
         this.radioButtons.push(radio_button);
-
+        let src = "";
+        if (output.type === "image" || output.type === "temp") {
+          filename = output.image.filename;
+          src = `/view?filename=${output.image.filename}&subfolder=${output.image.subfolder}&type=${output.image.type}`;
+        } else if (output.type === "output") {
+          src = output.output.value;
+          filename = output.filename;
+        }
+        if (src) {
+          
+          this.fetchImageBlob(src).then((blob) => {
+            const file = new File([blob], filename, {
+              type: blob.type,
+            });
+            this.allFiles.push(file);
+          });
+        }
+        console.log('~log=======================', this.allFiles)
         return $el(
           `label.output_label${radio_button.checked ? ".checked" : ""}`,
           {
