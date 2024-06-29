@@ -1,10 +1,16 @@
 import { api } from "../../scripts/api.js";
 import { app } from "../../scripts/app.js";
 import { $el, ComfyDialog } from "../../scripts/ui.js";
+const env = "dev";
 
-const DEFAULT_HOMEPAGE_URL = "https://copus.io";
+let DEFAULT_HOMEPAGE_URL = "https://copus.io";
 
-const API_ENDPOINT = "https://test.copus.io/copus-client";
+let API_ENDPOINT = "https://api.client.prod.copus.io";
+
+if (env !== "prod") {
+  API_ENDPOINT = "https://api.dev.copus.io/copus-client";
+  DEFAULT_HOMEPAGE_URL = "https://test.copus.io";
+}
 
 const style = `
   .openart-share-dialog a {
@@ -59,34 +65,7 @@ export class CopusShareDialog extends ComfyDialog {
     this.uploadedImages = [];
     this.selectedFile = null;
   }
-
-  async readKey() {
-    let key = ""
-    try {
-      key = await api.fetchApi(`/manager/get_openart_auth`)
-        .then(response => response.json())
-        .then(data => {
-          return data.openart_key;
-        })
-        .catch(error => {
-          // console.log(error);
-        });
-    } catch (error) {
-      // console.log(error);
-    }
-    return key || "";
-  }
-
-  async saveKey(value) {
-    await api.fetchApi(`/manager/set_openart_auth`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        openart_key: value
-      })
-    });
-  }
-
+  // 生成 html 元素
   createButtons() {
     const inputStyle = {
       display: "block",
@@ -109,7 +88,7 @@ export class CopusShareDialog extends ComfyDialog {
       border: "1px solid #ddd",
       boxSizing: "border-box",
       minHeight: "100px",
-      background:'#222',
+      background: "#222",
       resize: "vertical",
       color: "#f2f2f2",
     };
@@ -159,7 +138,7 @@ export class CopusShareDialog extends ComfyDialog {
         const imgData = e.target.result;
         this.previewImage.src = imgData;
         this.previewImage.style.display = "block";
-        this.selectedFile = null
+        this.selectedFile = null;
         // Once user uploads an image, we uncheck all radio buttons
         this.radioButtons.forEach((ele) => {
           ele.checked = false;
@@ -182,7 +161,7 @@ export class CopusShareDialog extends ComfyDialog {
         maxHeight: "100px",
         objectFit: "contain",
         display: "none",
-        marginTop: '10px',
+        marginTop: "10px",
       },
     });
 
@@ -191,7 +170,7 @@ export class CopusShareDialog extends ComfyDialog {
       placeholder: "Copy & paste your API key",
       style: inputStyle,
     });
-    this.NameInput = $el("input", {
+    this.TitleInput = $el("input", {
       type: "text",
       placeholder: "Title (Required)",
       style: inputStyle,
@@ -202,7 +181,7 @@ export class CopusShareDialog extends ComfyDialog {
       style: inputStyle,
     });
     this.descriptionInput = $el("textarea", {
-      placeholder: "Subtitle (Optional)",
+      placeholder: "content (Optional)",
       style: {
         ...textAreaStyle,
         minHeight: "100px",
@@ -211,30 +190,27 @@ export class CopusShareDialog extends ComfyDialog {
 
     // Header Section
     const headerSection = $el("h3", {
-      textContent: "Share your workflow to OpenArt",
+      textContent: "Share your workflow to Copus",
       size: 3,
       color: "white",
       style: {
-        'text-align': 'center',
-        color: 'white',
-        margin: '0 0 10px 0',
-      }
-    });
-
-    // LinkSection
-    // this.communityLink = $el("a", {
-    //   style: hyperLinkStyle,
-    //   href: DEFAULT_HOMEPAGE_URL,
-    //   target: "_blank"
-    // }, ["👉 Check out thousands of workflows shared from the community"])
-    this.getAPIKeyLink = $el("a", {
-      style: {
-        ...hyperLinkStyle,
-        color: "#59E8C6"
+        "text-align": "center",
+        color: "white",
+        margin: "0 0 10px 0",
       },
-      href: DEFAULT_HOMEPAGE_URL,
-      target: "_blank"
-    }, ["👉 Get your API key here"])
+    });
+    this.getAPIKeyLink = $el(
+      "a",
+      {
+        style: {
+          ...hyperLinkStyle,
+          color: "#59E8C6",
+        },
+        href: DEFAULT_HOMEPAGE_URL,
+        target: "_blank",
+      },
+      ["👉 Get your API key here"]
+    );
     const linkSection = $el(
       "div",
       {
@@ -251,33 +227,40 @@ export class CopusShareDialog extends ComfyDialog {
     );
 
     // Account Section
-    const accountSection = $el("div", {style: sectionStyle}, [
-      $el("label", {style: labelStyle}, ["1️⃣ OpenArt API Key"]),
+    const accountSection = $el("div", { style: sectionStyle }, [
+      $el("label", { style: labelStyle }, ["1️⃣ OpenArt API Key"]),
       this.keyInput,
     ]);
 
     // Output Upload Section
-    const outputUploadSection = $el("div", {style: sectionStyle}, [
-      $el("label", {
-        style: {
-          ...labelStyle,
-          margin: "10px 0 0 0"
-        }
-      }, ["2️⃣ Image/Thumbnail (Required)"]),
+    const outputUploadSection = $el("div", { style: sectionStyle }, [
+      $el(
+        "label",
+        {
+          style: {
+            ...labelStyle,
+            margin: "10px 0 0 0",
+          },
+        },
+        ["2️⃣ Image/Thumbnail (Required)"]
+      ),
       this.previewImage,
       this.uploadImagesInput,
     ]);
 
     // Outputs Section
-    this.outputsSection = $el("div", {
-      id: "selectOutputs",
-    }, []);
+    this.outputsSection = $el(
+      "div",
+      {
+        id: "selectOutputs",
+      },
+      []
+    );
 
     // Additional Inputs Section
     const additionalInputsSection = $el("div", { style: sectionStyle }, [
       $el("label", { style: labelStyle }, ["3️⃣ Title "]),
-      this.NameInput,
-      
+      this.TitleInput,
     ]);
     const SubtitleSection = $el("div", { style: sectionStyle }, [
       $el("label", { style: labelStyle }, ["4️⃣ Subtitle "]),
@@ -289,6 +272,21 @@ export class CopusShareDialog extends ComfyDialog {
     ]);
     // switch  between outputs section and additional inputs section
     this.radioButtons = [];
+
+    this.radioButtonsCheck = $el("input", {
+      type: "radio",
+      name: "output_type",
+      value: "0",
+      id: "blockchain1",
+      checked: true,
+    });
+    this.radioButtonsCheckOff = $el("input", {
+      type: "radio",
+      name: "output_type",
+      value: "1",
+      id: "blockchain",
+    });
+
     const blockChainSection = $el("div", { style: sectionStyle }, [
       $el("label", { style: labelStyle }, ["6️⃣ Store on blockchain "]),
       // swicth 开关
@@ -303,13 +301,7 @@ export class CopusShareDialog extends ComfyDialog {
           },
         },
         [
-          $el("input", {
-            type: "radio",
-            name: "output_type",
-            value: "0",
-            id: "blockchain1",
-            checked: true,
-          }),
+          this.radioButtonsCheck,
           $el("span", { style: { marginLeft: "5px" } }, ["ON"]),
         ]
       ),
@@ -317,12 +309,7 @@ export class CopusShareDialog extends ComfyDialog {
         "label",
         { style: { display: "flex", alignItems: "center", cursor: "pointer" } },
         [
-          $el("input", {
-            type: "radio",
-            name: "output_type",
-            value: "1",
-            id: "blockchain",
-          }),
+          this.radioButtonsCheckOff,
           $el("span", { style: { marginLeft: "5px" } }, ["OFF"]),
         ]
       ),
@@ -334,36 +321,6 @@ export class CopusShareDialog extends ComfyDialog {
         ["Secure your ownership with a permanent & decentralized storage"]
       ),
     ]);
-    // OpenArt Contest Section
-    /*
-    this.joinContestCheckbox = $el("input", {
-      type: 'checkbox',
-      id: "join_contest"s
-    }, [])
-    this.joinContestDescription = $el("a", {
-      style: {
-        ...hyperLinkStyle,
-        display: 'inline-block',
-        color: "#59E8C6",
-        fontSize: '12px',
-        marginLeft: '10px',
-        marginBottom: 0,
-      },
-      href: "https://contest.openart.ai/",
-      target: "_blank"
-    }, ["🏆 I'm participating in the OpenArt workflow contest"])
-    this.joinContestLabel = $el("label", {
-      style: {
-        display: 'flex',
-        alignItems: 'center',
-        cursor: 'pointer',
-      }
-    }, [this.joinContestCheckbox, this.joinContestDescription])
-    const contestSection = $el("div", {style: sectionStyle}, [
-      this.joinContestLabel,
-    ]);
-    */
-
     // Message Section
     this.message = $el(
       "div",
@@ -432,29 +389,22 @@ export class CopusShareDialog extends ComfyDialog {
 
     return layout;
   }
-
+  /**
+   * api 封装
+   * @param {url} path 
+   * @param {params} options 
+   * @param {statusText} statusText 
+   * @returns 
+   */
   async fetchApi(path, options, statusText) {
     if (statusText) {
       this.message.textContent = statusText;
     }
-    const addSearchParams = (url, params = {}) =>
-      new URL(
-        `${url.origin}${url.pathname}?${new URLSearchParams([
-          ...Array.from(url.searchParams.entries()),
-          ...Object.entries(params),
-        ])}`
-      );
-
-    const fullPath = addSearchParams(new URL(API_ENDPOINT + path), {
-      workflow_api_key: this.keyInput.value,
-    });
-
+    const fullPath = new URL(API_ENDPOINT + path);
     const response = await fetch(fullPath, options);
-
     if (!response.ok) {
       throw new Error(response.statusText);
     }
-
     if (statusText) {
       this.message.textContent = "";
     }
@@ -466,13 +416,17 @@ export class CopusShareDialog extends ComfyDialog {
       data,
     };
   }
-
+  /**
+   * 文件上传
+   * @param {file} uploadFile
+   */
   async uploadThumbnail(uploadFile) {
     const form = new FormData();
     form.append("file", uploadFile);
+    form.append("apiToken", this.keyInput.value);
     try {
       const res = await this.fetchApi(
-        `/workflows/upload_thumbnail`,
+        `/client/common/opus/uploadImage`,
         {
           method: "POST",
           body: form,
@@ -480,12 +434,10 @@ export class CopusShareDialog extends ComfyDialog {
         "Uploading thumbnail..."
       );
 
-      if (res.ok && res.data) {
-        const {image_url, width, height} = res.data;
+      if (res.status && res.data) {
+        const { data } = res.data;
         this.uploadedImages.push({
-          url: image_url,
-          width,
-          height,
+          url: data,
         });
       }
     } catch (e) {
@@ -499,7 +451,6 @@ export class CopusShareDialog extends ComfyDialog {
 
   async handleShareButtonClick() {
     this.message.textContent = "";
-    await this.saveKey(this.keyInput.value);
     try {
       this.shareButton.disabled = true;
       this.shareButton.textContent = "Sharing...";
@@ -510,15 +461,24 @@ export class CopusShareDialog extends ComfyDialog {
     this.shareButton.disabled = false;
     this.shareButton.textContent = "Share";
   }
-
+  /**
+   * 开始分享
+   * @param {string} title
+   * @param {string} subtitle
+   * @param {string} content
+   * @param {boolean} storeOnChain
+   * @param {string} coverUrl
+   * @param {string[]} imageUrls
+   * @param {string} apiToken
+   */
   async share() {
     const prompt = await app.graphToPrompt();
     const workflowJSON = prompt["workflow"];
-    const workflowAPIJSON = prompt["output"];
     const form_values = {
-      name: this.NameInput.value,
-      description: this.descriptionInput.value,
-      blockchain: this.blockchain.checked ? 1 : 0,
+      title: this.TitleInput.value,
+      subtitle: this.SubTitleInput.value,
+      content: this.descriptionInput.value,
+      storeOnChain: this.radioButtonsCheck.checked ? true : false,
     };
 
     if (!this.keyInput.value) {
@@ -529,16 +489,9 @@ export class CopusShareDialog extends ComfyDialog {
       throw new Error("Thumbnail is required");
     }
 
-    if (!form_values.name) {
+    if (!form_values.title) {
       throw new Error("Title is required");
     }
-
-    const current_snapshot = await api.fetchApi(`/snapshot/get_current`)
-      .then(response => response.json())
-      .catch(error => {
-        // console.log(error);
-      });
-
 
     if (!this.uploadedImages.length) {
       if (this.selectedFile) {
@@ -558,263 +511,39 @@ export class CopusShareDialog extends ComfyDialog {
         }
       }
     }
-
-    // const join_contest = this.joinContestCheckbox.checked;
-
     try {
-      const response = await this.fetchApi(
-        "/workflows/publish",
+      const res = await this.fetchApi(
+        "/client/common/opus/shareFromComfyUI",
         {
           method: "POST",
-          headers: {"Content-Type": "application/json"},
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            workflow_json: workflowJSON,
-            upload_images: this.uploadedImages,
-            form_values,
-            advanced_config: {
-              workflow_api_json: workflowAPIJSON,
-              snapshot: current_snapshot,
-            },
-            // join_contest,
+            workflowJson: workflowJSON,
+            apiToken: this.keyInput.value,
+            coverUrl: this.uploadedImages[0].url,
+            imageUrls: this.uploadedImages.map((image) => image.url),
+            ...form_values,
           }),
         },
         "Uploading workflow..."
       );
 
-      if (response.ok) {
-        const {workflow_id} = response.data;
-        if (workflow_id) {
-          const url = `https://openart.ai/workflows/-/-/${workflow_id}`;
+      if (res.status && res.data) {
+        const { data } = res.data;
+        if (data) {
+          const url = `${DEFAULT_HOMEPAGE_URL}/work/${data}`;
           this.message.innerHTML = `Workflow has been shared successfully. <a href="${url}" target="_blank">Click here to view it.</a>`;
           this.previewImage.src = "";
           this.previewImage.style.display = "none";
           this.uploadedImages = [];
-          this.NameInput.value = "";
+          this.TitleInput.value = "";
+          this.SubTitleInput.value = "";
           this.descriptionInput.value = "";
-          this.radioButtons.forEach((ele) => {
-            ele.checked = false;
-            ele.parentElement.classList.remove("checked");
-          });
-          this.selectedOutputIndex = 0;
-          this.selectedNodeId = null;
           this.selectedFile = null;
         }
       }
     } catch (e) {
       throw new Error("Error sharing workflow: " + e.message);
     }
-  }
-
-  async fetchImageBlob(url) {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    return blob;
-  }
-
-  async show({potential_outputs, potential_output_nodes} = {}) {
-    // Sort `potential_output_nodes` by node ID to make the order always
-    // consistent, but we should also keep `potential_outputs` in the same
-    // order as `potential_output_nodes`.
-    const potential_output_to_order = {};
-    potential_output_nodes.forEach((node, index) => {
-      if (node.id in potential_output_to_order) {
-        potential_output_to_order[node.id][1].push(potential_outputs[index]);
-      } else {
-        potential_output_to_order[node.id] = [node, [potential_outputs[index]]];
-      }
-    })
-    // Sort the object `potential_output_to_order` by key (node ID)
-    const sorted_potential_output_to_order = Object.fromEntries(
-      Object.entries(potential_output_to_order).sort((a, b) => a[0].id - b[0].id)
-    );
-    const sorted_potential_outputs = []
-    const sorted_potential_output_nodes = []
-    for (const [key, value] of Object.entries(sorted_potential_output_to_order)) {
-      sorted_potential_output_nodes.push(value[0]);
-      sorted_potential_outputs.push(...value[1]);
-    }
-    potential_output_nodes = sorted_potential_output_nodes;
-    potential_outputs = sorted_potential_outputs;
-
-    this.message.innerHTML = "";
-    this.message.textContent = "";
-    this.element.style.display = "block";
-    this.previewImage.src = "";
-    this.previewImage.style.display = "none";
-    const key = await this.readKey();
-    this.keyInput.value = key;
-    this.uploadedImages = [];
-
-    // If `selectedNodeId` is provided, we will select the corresponding radio
-    // button for the node. In addition, we move the selected radio button to
-    // the top of the list.
-    if (this.selectedNodeId) {
-      const index = potential_output_nodes.findIndex(node => node.id === this.selectedNodeId);
-      if (index >= 0) {
-        this.selectedOutputIndex = index;
-      }
-    }
-
-    this.radioButtons = [];
-    const new_radio_buttons = $el("div",
-      {
-        id: "selectOutput-Options",
-        style: {
-          'overflow-y': 'scroll',
-          'max-height': '200px',
-
-          'display': 'grid',
-          'grid-template-columns': 'repeat(auto-fit, minmax(100px, 1fr))',
-          'grid-template-rows': 'auto',
-          'grid-column-gap': '10px',
-          'grid-row-gap': '10px',
-          'margin-bottom': '10px',
-          'padding': '10px',
-          'border-radius': '8px',
-          'box-shadow': '0 2px 4px rgba(0, 0, 0, 0.05)',
-          'background-color': 'var(--bg-color)',
-        }
-      },
-      potential_outputs.map((output, index) => {
-        const {node_id} = output;
-        const radio_button = $el("input", {
-          type: 'radio',
-          name: "selectOutputImages",
-          value: index,
-          required: index === 0
-        }, [])
-        let radio_button_img;
-        let filename;
-        if (output.type === "image" || output.type === "temp") {
-          radio_button_img = $el("img", {
-            src: `/view?filename=${output.image.filename}&subfolder=${output.image.subfolder}&type=${output.image.type}`,
-            style: {
-              width: "100px",
-              height: "100px",
-              objectFit: "cover",
-              borderRadius: "5px"
-            }
-          }, []);
-          filename = output.image.filename
-        } else if (output.type === "output") {
-          radio_button_img = $el("img", {
-            src: output.output.value,
-            style: {
-              width: "auto",
-              height: "100px",
-              objectFit: "cover",
-              borderRadius: "5px"
-            }
-          }, []);
-          filename = output.filename
-        } else {
-          // unsupported output type
-          // this should never happen
-          // TODO
-          radio_button_img = $el("img", {
-            src: "",
-            style: {width: "auto", height: "100px"}
-          }, []);
-        }
-        const radio_button_text = $el("span", {
-          style: {
-            color: 'gray',
-            display: 'block',
-            fontSize: '12px',
-            overflowX: 'hidden',
-            textOverflow: 'ellipsis',
-            textWrap: 'nowrap',
-            maxWidth: '100px',
-          }
-        }, [output.title])
-        const node_id_chip = $el("span", {
-          style: {
-            color: '#FBFBFD',
-            display: 'block',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            fontSize: '12px',
-            overflowX: 'hidden',
-            padding: '2px 3px',
-            textOverflow: 'ellipsis',
-            textWrap: 'nowrap',
-            maxWidth: '100px',
-            position: 'absolute',
-            top: '3px',
-            left: '3px',
-            borderRadius: '3px',
-          }
-        }, [`Node: ${node_id}`])
-        radio_button.style.color = "var(--fg-color)";
-        radio_button.checked = this.selectedOutputIndex === index;
-
-        radio_button.onchange = async () => {
-          this.selectedOutputIndex = parseInt(radio_button.value);
-
-          // Remove the "checked" class from all radio buttons
-          this.radioButtons.forEach((ele) => {
-            ele.parentElement.classList.remove("checked");
-          });
-          radio_button.parentElement.classList.add("checked");
-
-          this.fetchImageBlob(radio_button_img.src).then((blob) => {
-            const file = new File([blob], filename, {
-              type: blob.type,
-            });
-            this.previewImage.src = radio_button_img.src;
-            this.previewImage.style.display = "block";
-            this.selectedFile = file;
-          })
-
-          // Add the opacity style toggle here to indicate that they only need
-          // to upload one image or choose one from the outputs.
-          this.outputsSection.style.opacity = 1;
-          this.uploadImagesInput.style.opacity = 0.35;
-        };
-
-        if (radio_button.checked) {
-          this.fetchImageBlob(radio_button_img.src).then((blob) => {
-            const file = new File([blob], filename, {
-              type: blob.type,
-            });
-            this.previewImage.src = radio_button_img.src;
-            this.previewImage.style.display = "block";
-            this.selectedFile = file;
-          })
-          // Add the opacity style toggle here to indicate that they only need
-          // to upload one image or choose one from the outputs.
-          this.outputsSection.style.opacity = 1;
-          this.uploadImagesInput.style.opacity = 0.35;
-        }
-
-        this.radioButtons.push(radio_button);
-
-        return $el(`label.output_label${radio_button.checked ? '.checked' : ''}`, {
-          style: {
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            marginBottom: "10px",
-            cursor: "pointer",
-            position: 'relative',
-          }
-        }, [radio_button_img, radio_button_text, radio_button, node_id_chip]);
-      })
-    );
-
-    const header =
-      $el("p", {
-        textContent: this.radioButtons.length === 0 ? "Queue Prompt to see the outputs" : "Or choose one from the outputs (scroll to see all)",
-        size: 2,
-        color: "white",
-        style: {
-          color: 'white',
-          margin: '0 0 5px 0',
-          fontSize: '12px',
-        },
-      }, [])
-    this.outputsSection.innerHTML = "";
-    this.outputsSection.appendChild(header);
-    this.outputsSection.appendChild(new_radio_buttons);
   }
 }
