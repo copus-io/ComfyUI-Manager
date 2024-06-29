@@ -391,10 +391,10 @@ export class CopusShareDialog extends ComfyDialog {
   }
   /**
    * api 封装
-   * @param {url} path 
-   * @param {params} options 
-   * @param {statusText} statusText 
-   * @returns 
+   * @param {url} path
+   * @param {params} options
+   * @param {statusText} statusText
+   * @returns
    */
   async fetchApi(path, options, statusText) {
     if (statusText) {
@@ -545,5 +545,259 @@ export class CopusShareDialog extends ComfyDialog {
     } catch (e) {
       throw new Error("Error sharing workflow: " + e.message);
     }
+  }
+
+  async fetchImageBlob(url) {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return blob;
+  }
+
+  async show({ potential_outputs, potential_output_nodes } = {}) {
+    // Sort `potential_output_nodes` by node ID to make the order always
+    // consistent, but we should also keep `potential_outputs` in the same
+    // order as `potential_output_nodes`.
+    const potential_output_to_order = {};
+    potential_output_nodes.forEach((node, index) => {
+      if (node.id in potential_output_to_order) {
+        potential_output_to_order[node.id][1].push(potential_outputs[index]);
+      } else {
+        potential_output_to_order[node.id] = [node, [potential_outputs[index]]];
+      }
+    });
+    // Sort the object `potential_output_to_order` by key (node ID)
+    const sorted_potential_output_to_order = Object.fromEntries(
+      Object.entries(potential_output_to_order).sort(
+        (a, b) => a[0].id - b[0].id
+      )
+    );
+    const sorted_potential_outputs = [];
+    const sorted_potential_output_nodes = [];
+    for (const [key, value] of Object.entries(
+      sorted_potential_output_to_order
+    )) {
+      sorted_potential_output_nodes.push(value[0]);
+      sorted_potential_outputs.push(...value[1]);
+    }
+    potential_output_nodes = sorted_potential_output_nodes;
+    potential_outputs = sorted_potential_outputs;
+
+    this.message.innerHTML = "";
+    this.message.textContent = "";
+    this.element.style.display = "block";
+    this.previewImage.src = "";
+    this.previewImage.style.display = "none";
+    const key = await this.readKey();
+    this.keyInput.value = key;
+    this.uploadedImages = [];
+
+    // If `selectedNodeId` is provided, we will select the corresponding radio
+    // button for the node. In addition, we move the selected radio button to
+    // the top of the list.
+    if (this.selectedNodeId) {
+      const index = potential_output_nodes.findIndex(
+        (node) => node.id === this.selectedNodeId
+      );
+      if (index >= 0) {
+        this.selectedOutputIndex = index;
+      }
+    }
+
+    this.radioButtons = [];
+    const new_radio_buttons = $el(
+      "div",
+      {
+        id: "selectOutput-Options",
+        style: {
+          "overflow-y": "scroll",
+          "max-height": "200px",
+
+          display: "grid",
+          "grid-template-columns": "repeat(auto-fit, minmax(100px, 1fr))",
+          "grid-template-rows": "auto",
+          "grid-column-gap": "10px",
+          "grid-row-gap": "10px",
+          "margin-bottom": "10px",
+          padding: "10px",
+          "border-radius": "8px",
+          "box-shadow": "0 2px 4px rgba(0, 0, 0, 0.05)",
+          "background-color": "var(--bg-color)",
+        },
+      },
+      potential_outputs.map((output, index) => {
+        const { node_id } = output;
+        const radio_button = $el(
+          "input",
+          {
+            type: "radio",
+            name: "selectOutputImages",
+            value: index,
+            required: index === 0,
+          },
+          []
+        );
+        let radio_button_img;
+        let filename;
+        if (output.type === "image" || output.type === "temp") {
+          radio_button_img = $el(
+            "img",
+            {
+              src: `/view?filename=${output.image.filename}&subfolder=${output.image.subfolder}&type=${output.image.type}`,
+              style: {
+                width: "100px",
+                height: "100px",
+                objectFit: "cover",
+                borderRadius: "5px",
+              },
+            },
+            []
+          );
+          filename = output.image.filename;
+        } else if (output.type === "output") {
+          radio_button_img = $el(
+            "img",
+            {
+              src: output.output.value,
+              style: {
+                width: "auto",
+                height: "100px",
+                objectFit: "cover",
+                borderRadius: "5px",
+              },
+            },
+            []
+          );
+          filename = output.filename;
+        } else {
+          // unsupported output type
+          // this should never happen
+          // TODO
+          radio_button_img = $el(
+            "img",
+            {
+              src: "",
+              style: { width: "auto", height: "100px" },
+            },
+            []
+          );
+        }
+        const radio_button_text = $el(
+          "span",
+          {
+            style: {
+              color: "gray",
+              display: "block",
+              fontSize: "12px",
+              overflowX: "hidden",
+              textOverflow: "ellipsis",
+              textWrap: "nowrap",
+              maxWidth: "100px",
+            },
+          },
+          [output.title]
+        );
+        const node_id_chip = $el(
+          "span",
+          {
+            style: {
+              color: "#FBFBFD",
+              display: "block",
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              fontSize: "12px",
+              overflowX: "hidden",
+              padding: "2px 3px",
+              textOverflow: "ellipsis",
+              textWrap: "nowrap",
+              maxWidth: "100px",
+              position: "absolute",
+              top: "3px",
+              left: "3px",
+              borderRadius: "3px",
+            },
+          },
+          [`Node: ${node_id}`]
+        );
+        radio_button.style.color = "var(--fg-color)";
+        radio_button.checked = this.selectedOutputIndex === index;
+
+        radio_button.onchange = async () => {
+          this.selectedOutputIndex = parseInt(radio_button.value);
+
+          // Remove the "checked" class from all radio buttons
+          this.radioButtons.forEach((ele) => {
+            ele.parentElement.classList.remove("checked");
+          });
+          radio_button.parentElement.classList.add("checked");
+
+          this.fetchImageBlob(radio_button_img.src).then((blob) => {
+            const file = new File([blob], filename, {
+              type: blob.type,
+            });
+            this.previewImage.src = radio_button_img.src;
+            this.previewImage.style.display = "block";
+            this.selectedFile = file;
+          });
+
+          // Add the opacity style toggle here to indicate that they only need
+          // to upload one image or choose one from the outputs.
+          this.outputsSection.style.opacity = 1;
+          this.uploadImagesInput.style.opacity = 0.35;
+        };
+
+        if (radio_button.checked) {
+          this.fetchImageBlob(radio_button_img.src).then((blob) => {
+            const file = new File([blob], filename, {
+              type: blob.type,
+            });
+            this.previewImage.src = radio_button_img.src;
+            this.previewImage.style.display = "block";
+            this.selectedFile = file;
+          });
+          // Add the opacity style toggle here to indicate that they only need
+          // to upload one image or choose one from the outputs.
+          this.outputsSection.style.opacity = 1;
+          this.uploadImagesInput.style.opacity = 0.35;
+        }
+
+        this.radioButtons.push(radio_button);
+
+        return $el(
+          `label.output_label${radio_button.checked ? ".checked" : ""}`,
+          {
+            style: {
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: "10px",
+              cursor: "pointer",
+              position: "relative",
+            },
+          },
+          [radio_button_img, radio_button_text, radio_button, node_id_chip]
+        );
+      })
+    );
+
+    const header = $el(
+      "p",
+      {
+        textContent:
+          this.radioButtons.length === 0
+            ? "Queue Prompt to see the outputs"
+            : "Or choose one from the outputs (scroll to see all)",
+        size: 2,
+        color: "white",
+        style: {
+          color: "white",
+          margin: "0 0 5px 0",
+          fontSize: "12px",
+        },
+      },
+      []
+    );
+    this.outputsSection.innerHTML = "";
+    this.outputsSection.appendChild(header);
+    this.outputsSection.appendChild(new_radio_buttons);
   }
 }
