@@ -587,8 +587,7 @@ export class CopusShareDialog extends ComfyDialog {
     this.element.style.display = "block";
     this.previewImage.src = "";
     this.previewImage.style.display = "none";
-    const key = await this.readKey();
-    this.keyInput.value = key;
+    this.keyInput.value = '';
     this.uploadedImages = [];
 
     // If `selectedNodeId` is provided, we will select the corresponding radio
