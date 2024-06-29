@@ -1,4 +1,3 @@
-import { api } from "../../scripts/api.js";
 import { app } from "../../scripts/app.js";
 import { $el, ComfyDialog } from "../../scripts/ui.js";
 const env = "dev";
@@ -483,7 +482,7 @@ export class CopusShareDialog extends ComfyDialog {
     const workflowJSON = prompt["workflow"];
     const form_values = {
       title: this.TitleInput.value,
-      subtitle: this.SubTitleInput.value,
+      subTitle: this.SubTitleInput.value,
       content: this.descriptionInput.value,
       storeOnChain: this.radioButtonsCheck.checked ? true : false,
     };
