@@ -336,7 +336,7 @@ export class ShareDialogChooser extends ComfyDialog {
 				key: "Copus",
 				textContent: "Copus",
 				website: "https://www.copus.io",
-				description: "Share your workflow into an interactive app on Copus.io",
+				description: "🔴 Secure ownership, permanently store & share your workflow on the open-source platform: <a style='color:white;' href='https://copus.io' target='_blank'>Copus.id</a> 🔴",
 				onclick: () => {
 					showCopusShareDialog();
 				  this.close();

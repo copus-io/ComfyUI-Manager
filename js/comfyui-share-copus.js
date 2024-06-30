@@ -1,6 +1,5 @@
 import { app } from "../../scripts/app.js";
 import { $el, ComfyDialog } from "../../scripts/ui.js";
-import f from "./turbogrid.esm.js";
 const env = "dev";
 
 let DEFAULT_HOMEPAGE_URL = "https://copus.io";
@@ -390,7 +389,7 @@ export class CopusShareDialog extends ComfyDialog {
       $el(
         "p",
         { style: { fontSize: "16px", color: "#fff", margin: "10px 0 0 0" } },
-        ["Secure your ownership with a permanent & decentralized storage"]
+        ["Secure ownership with a permanent & decentralized storage"]
       ),
     ]);
     // Message Section
