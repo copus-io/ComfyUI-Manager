@@ -1,5 +1,6 @@
 import { app } from "../../scripts/app.js";
 import { $el, ComfyDialog } from "../../scripts/ui.js";
+import f from "./turbogrid.esm.js";
 const env = "dev";
 
 let DEFAULT_HOMEPAGE_URL = "https://copus.io";
@@ -38,6 +39,7 @@ const sectionStyle = {
   display: "flex",
   flexDirection: "column",
   justifyContent: "center",
+  position: "relative",
 };
 
 export class CopusShareDialog extends ComfyDialog {
@@ -65,6 +67,7 @@ export class CopusShareDialog extends ComfyDialog {
     this.allFilesImages = [];
     this.selectedFile = null;
     this.allFiles = [];
+    this.titleNum = 0;
   }
   // 生成 html 元素
   createButtons() {
@@ -92,6 +95,9 @@ export class CopusShareDialog extends ComfyDialog {
       background: "#222",
       resize: "vertical",
       color: "#f2f2f2",
+      fontFamily: "Arial",
+      fontWeight: "400",
+      fontSize: "15px",
     };
 
     const hyperLinkStyle = {
@@ -175,18 +181,37 @@ export class CopusShareDialog extends ComfyDialog {
       type: "text",
       placeholder: "Title (Required)",
       style: inputStyle,
+      maxLength: "70",
+      // 监听input输入内容
+      oninput: () => {
+        const titleNum = this.TitleInput.value.length;
+        titleNumDom.textContent = `${titleNum}/70`;
+      },
     });
     this.SubTitleInput = $el("input", {
       type: "text",
       placeholder: "Subtitle (Optional)",
       style: inputStyle,
+      maxLength: "70",
+      // 监听input输入内容
+      oninput: () => {
+        const titleNum = this.SubTitleInput.value.length;
+        subtTitleNumDom.textContent = `${titleNum}/70`;
+      },
     });
     this.descriptionInput = $el("textarea", {
-      placeholder: "content (Optional)",
+      placeholder: "Content (Optional)",
+      maxlength: "70",
       style: {
         ...textAreaStyle,
         minHeight: "100px",
       },
+      //  maxLength: "70",
+      // 监听input输入内容
+      // oninput: () => {
+      //   const titleNum = this.descriptionInput.value.length;
+      //   titleNumDom.textContent = `${titleNum}/70`;
+      // },
     });
 
     // Header Section
@@ -257,19 +282,65 @@ export class CopusShareDialog extends ComfyDialog {
       },
       []
     );
-
+    
+    const titleNumDom = $el(
+      "label",
+      {
+        style: {
+          fontSize: "12px",
+          position: "absolute",
+          right: "10px",
+          bottom: "-10px",
+          color: "#999",
+        },
+      },
+      ["0/70"]
+    );
+    const subtTitleNumDom = $el(
+      "label",
+      {
+        style: {
+          fontSize: "12px",
+          position: "absolute",
+          right: "10px",
+          bottom: "-10px",
+          color: "#999",
+        },
+      },
+      ["0/70"]
+    );
+    const descriptionNumDom = $el(
+      "label",
+      {
+        style: {
+          fontSize: "12px",
+          position: "absolute",
+          right: "10px",
+          bottom: "-10px",
+          color: "#999",
+        },
+      },
+      ["0/70"]
+    );
     // Additional Inputs Section
-    const additionalInputsSection = $el("div", { style: sectionStyle }, [
-      $el("label", { style: labelStyle }, ["3️⃣ Title "]),
-      this.TitleInput,
-    ]);
+    const additionalInputsSection = $el(
+      "div",
+      { style: { ...sectionStyle,  } },
+      [
+        $el("label", { style: labelStyle }, ["3️⃣ Title "]),
+        this.TitleInput,
+        titleNumDom,
+      ]
+    );
     const SubtitleSection = $el("div", { style: sectionStyle }, [
       $el("label", { style: labelStyle }, ["4️⃣ Subtitle "]),
       this.SubTitleInput,
+      subtTitleNumDom,
     ]);
     const DescriptionSection = $el("div", { style: sectionStyle }, [
       $el("label", { style: labelStyle }, ["5️⃣ Description "]),
       this.descriptionInput,
+      // descriptionNumDom,
     ]);
     // switch  between outputs section and additional inputs section
     this.radioButtons = [];
@@ -434,8 +505,7 @@ export class CopusShareDialog extends ComfyDialog {
         },
         "Uploading thumbnail..."
       );
-
-      if (res.status && res.data) {
+      if (res.status && res.data.status && res.data) {
         const { data } = res.data;
         if (type) {
           this.allFilesImages.push({
@@ -445,6 +515,8 @@ export class CopusShareDialog extends ComfyDialog {
         this.uploadedImages.push({
           url: data,
         });
+      } else {
+        throw new Error("make sure your API key is correct and try again later");
       }
     } catch (e) {
       if (e?.response?.status === 413) {
@@ -544,22 +616,22 @@ export class CopusShareDialog extends ComfyDialog {
         "Uploading workflow..."
       );
 
-      if (res.status && res.data) {
-        const { data } = res.data;
-        if (data) {
-          const url = `${DEFAULT_HOMEPAGE_URL}/work/${data}`;
-          this.message.innerHTML = `Workflow has been shared successfully. <a href="${url}" target="_blank">Click here to view it.</a>`;
-          this.previewImage.src = "";
-          this.previewImage.style.display = "none";
-          this.uploadedImages = [];
-          this.allFilesImages = [];
-          this.allFiles = [];
-          this.TitleInput.value = "";
-          this.SubTitleInput.value = "";
-          this.descriptionInput.value = "";
-          this.selectedFile = null;
-        }
-      }
+     if (res.status && res.data.status && res.data) {
+       const { data } = res.data;
+       if (data) {
+         const url = `${DEFAULT_HOMEPAGE_URL}/work/${data}`;
+         this.message.innerHTML = `Workflow has been shared successfully. <a href="${url}" target="_blank">Click here to view it.</a>`;
+         this.previewImage.src = "";
+         this.previewImage.style.display = "none";
+         this.uploadedImages = [];
+         this.allFilesImages = [];
+         this.allFiles = [];
+         this.TitleInput.value = "";
+         this.SubTitleInput.value = "";
+         this.descriptionInput.value = "";
+         this.selectedFile = null;
+       }
+     }
     } catch (e) {
       throw new Error("Error sharing workflow: " + e.message);
     }
@@ -629,13 +701,13 @@ export class CopusShareDialog extends ComfyDialog {
         style: {
           "overflow-y": "scroll",
           "max-height": "200px",
-          'display': "grid",
+          display: "grid",
           "grid-template-columns": "repeat(auto-fit, minmax(100px, 1fr))",
           "grid-template-rows": "auto",
           "grid-column-gap": "10px",
           "grid-row-gap": "10px",
           "margin-bottom": "10px",
-          'padding': "10px",
+          padding: "10px",
           "border-radius": "8px",
           "box-shadow": "0 2px 4px rgba(0, 0, 0, 0.05)",
           "background-color": "var(--bg-color)",
@@ -785,7 +857,6 @@ export class CopusShareDialog extends ComfyDialog {
           filename = output.filename;
         }
         if (src) {
-          
           this.fetchImageBlob(src).then((blob) => {
             const file = new File([blob], filename, {
               type: blob.type,
@@ -793,7 +864,7 @@ export class CopusShareDialog extends ComfyDialog {
             this.allFiles.push(file);
           });
         }
-        console.log('~log=======================', this.allFiles)
+        console.log("~log=======================", this.allFiles);
         return $el(
           `label.output_label${radio_button.checked ? ".checked" : ""}`,
           {
