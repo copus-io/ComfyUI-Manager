@@ -12,10 +12,10 @@ if (env !== "prod") {
 }
 
 const style = `
-  .openart-share-dialog a {
+  .copus-share-dialog a {
     color: #f8f8f8;
   }
-  .openart-share-dialog a:hover {
+  .copus-share-dialog a:hover {
     color: #007bff;
   }
   .output_label {
@@ -51,7 +51,7 @@ export class CopusShareDialog extends ComfyDialog {
       parent: document.head,
     });
     this.element = $el(
-      "div.comfy-modal.openart-share-dialog",
+      "div.comfy-modal.copus-share-dialog",
       {
         parent: document.body,
         style: {
