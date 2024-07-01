@@ -68,7 +68,7 @@ export class CopusShareDialog extends ComfyDialog {
     this.allFiles = [];
     this.titleNum = 0;
   }
-  // 生成 html 元素
+  
   createButtons() {
     const inputStyle = {
       display: "block",
@@ -181,7 +181,6 @@ export class CopusShareDialog extends ComfyDialog {
       placeholder: "Title (Required)",
       style: inputStyle,
       maxLength: "70",
-      // 监听input输入内容
       oninput: () => {
         const titleNum = this.TitleInput.value.length;
         titleNumDom.textContent = `${titleNum}/70`;
@@ -192,25 +191,17 @@ export class CopusShareDialog extends ComfyDialog {
       placeholder: "Subtitle (Optional)",
       style: inputStyle,
       maxLength: "70",
-      // 监听input输入内容
       oninput: () => {
         const titleNum = this.SubTitleInput.value.length;
-        subtTitleNumDom.textContent = `${titleNum}/70`;
+        subTitleNumDom.textContent = `${titleNum}/70`;
       },
     });
     this.descriptionInput = $el("textarea", {
       placeholder: "Content (Optional)",
-      maxlength: "70",
       style: {
         ...textAreaStyle,
         minHeight: "100px",
       },
-      //  maxLength: "70",
-      // 监听input输入内容
-      // oninput: () => {
-      //   const titleNum = this.descriptionInput.value.length;
-      //   titleNumDom.textContent = `${titleNum}/70`;
-      // },
     });
 
     // Header Section
@@ -295,7 +286,7 @@ export class CopusShareDialog extends ComfyDialog {
       },
       ["0/70"]
     );
-    const subtTitleNumDom = $el(
+    const subTitleNumDom = $el(
       "label",
       {
         style: {
@@ -334,7 +325,7 @@ export class CopusShareDialog extends ComfyDialog {
     const SubtitleSection = $el("div", { style: sectionStyle }, [
       $el("label", { style: labelStyle }, ["4️⃣ Subtitle "]),
       this.SubTitleInput,
-      subtTitleNumDom,
+      subTitleNumDom,
     ]);
     const DescriptionSection = $el("div", { style: sectionStyle }, [
       $el("label", { style: labelStyle }, ["5️⃣ Description "]),
@@ -360,7 +351,6 @@ export class CopusShareDialog extends ComfyDialog {
 
     const blockChainSection = $el("div", { style: sectionStyle }, [
       $el("label", { style: labelStyle }, ["6️⃣ Store on blockchain "]),
-      // swicth 开关
       $el(
         "label",
         {
@@ -384,8 +374,6 @@ export class CopusShareDialog extends ComfyDialog {
           $el("span", { style: { marginLeft: "5px" } }, ["OFF"]),
         ]
       ),
-      // 描述
-
       $el(
         "p",
         { style: { fontSize: "16px", color: "#fff", margin: "10px 0 0 0" } },
@@ -461,7 +449,7 @@ export class CopusShareDialog extends ComfyDialog {
     return layout;
   }
   /**
-   * api 封装
+   * api 
    * @param {url} path
    * @param {params} options
    * @param {statusText} statusText
@@ -488,7 +476,6 @@ export class CopusShareDialog extends ComfyDialog {
     };
   }
   /**
-   * 文件上传
    * @param {file} uploadFile
    */
   async uploadThumbnail(uploadFile, type) {
@@ -539,7 +526,7 @@ export class CopusShareDialog extends ComfyDialog {
     this.shareButton.textContent = "Share";
   }
   /**
-   * 开始分享
+   * share
    * @param {string} title
    * @param {string} subtitle
    * @param {string} content
@@ -759,7 +746,6 @@ export class CopusShareDialog extends ComfyDialog {
         } else {
           // unsupported output type
           // this should never happen
-          // TODO
           radio_button_img = $el(
             "img",
             {
